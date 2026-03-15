@@ -1,15 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
 }
 
-generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+enum Role {
+  BUYER
+  SELLER
+  ADMIN
 }
 
+
 model User {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  email     String   @unique
-  name      String?
+  id            String   @id @default(uuid())
+  name          String?
+  email         String   @unique
+  password      String?      // null if OAuth user
+  image         String?
+  role          Role     @default(BUYER)
+  provider      String   @default("local") 
+  providerId    String?      // google id etc
+  isVerified    Boolean  @default(false)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  seller        Seller?
+  accounts      Account[]
+  sessions      Session[]
+  reviews       Review[]
+  orders        Order[]
+}
+
+model Account {
+  id                 String  @id @default(uuid())
+  userId             String
+  provider           String  // google, github
+  providerAccountId  String  // unique id from provider
+  access_token       String?
+  refresh_token      String?
+  expires_at         Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  token        String   @unique
+  expiresAt    DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Seller {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  storeName     String
+  storeLogo     String?
+  description   String?
+  contactEmail  String?  // optional contact for buyers
+  returnPolicy  String?  // return/refund policy text
+  totalSales    Float    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products Product[]
+}
+
+
+model Product {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  price       Float
+  category    String   @default("general") // e.g. electronics, clothing, home, sports
+  imageUrl    String?
+  imageUrls   String[] @default([]) // multiple images (e.g. AI-generated)
+  sellerId    String
+  createdAt   DateTime @default(now())
+
+  seller  Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  reviews Review[]
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  productId    String
+  userId       String?  // optional: null for guest reviews
+  reviewerName String   // display name (from user or guest input)
+  rating       Int      // 1-5 stars
+  comment      String?  // optional text
+  createdAt    DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+model Order {
+  id               String      @id @default(uuid())
+  stripeSessionId  String?      @unique // Stripe Checkout Session ID
+  stripeChargeId   String?     // Stripe Charge ID (for refunds); set when payment completes
+  amountTotal      Int         // total in cents
+  status           OrderStatus @default(PENDING)
+  items            Json        // [{ productId, title, quantity, price }]
+  userId           String?
+  customerEmail    String?
+  customerPhone    String?     // required at checkout, stored with order
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
