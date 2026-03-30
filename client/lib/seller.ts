@@ -102,3 +102,63 @@ export async function updateSellerProfile(params: {
   if (!res.ok) throw new Error(data.error ?? "Failed to update store");
   return data.seller;
 }
+
+export type SellerProduct = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  category?: string;
+  imageUrl: string | null;
+  createdAt: string;
+};
+
+export async function createProduct(body: {
+  title: string;
+  description: string;
+  price: number;
+  category?: string;
+  imageUrl?: string;
+  imageUrls?: string[];
+}): Promise<SellerProduct> {
+  const token = getToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_URL}/api/seller/products`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Failed to create product");
+  return data.product;
+}
+
+
+export async function updateProduct(
+  productId: string,
+  body: {
+    title: string;
+    description: string;
+    price: number;
+    category?: string;
+    imageUrl?: string;
+    imageUrls?: string[];
+  }
+): Promise<SellerProduct> {
+  const token = getToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_URL}/api/seller/products/${encodeURIComponent(productId)}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Failed to update product");
+  return data.product;
+}

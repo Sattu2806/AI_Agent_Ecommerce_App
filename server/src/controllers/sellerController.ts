@@ -266,3 +266,6 @@ export async function getDashboard(req: AuthRequest, res: Response) {
     products,
   });
 }
+
+
+

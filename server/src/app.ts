@@ -4,6 +4,8 @@ import {prisma} from "./config/db.js"
 import { Request, Response } from 'express';
 import authRoutes from "./routes/authRoutes.js";
 import sellerRoutes from "./routes/sellerRoute.js"
+import uploadRoutes from "./routes/uploadRoutes.js";
+import productRoutes from "./routes/productRoutes.js"
 
 const app = express()
 
@@ -39,4 +41,6 @@ app.get("/health", async (_req: Request, res: Response) => {
 
 app.use("/api/auth",authRoutes)
 app.use("/api/seller",sellerRoutes)
+app.use("/api/products",productRoutes)
+app.use("/api/upload",uploadRoutes)
 export default app

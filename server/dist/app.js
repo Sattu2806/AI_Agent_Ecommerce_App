@@ -2,12 +2,15 @@ import express from 'express';
 import cors from "cors";
 import { prisma } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import sellerRoutes from "./routes/sellerRoute.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 const app = express();
-app.use(express.json());
 app.use(cors({
     origin: process.env.CLIENT_URL ?? "http://localhost:3000",
     credentials: true,
 }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.get('/', (req, res) => {
     res.send('Hello, World! This is a simple Express server using import syntax.');
 });
@@ -30,5 +33,7 @@ app.get("/health", async (_req, res) => {
     });
 });
 app.use("/api/auth", authRoutes);
+app.use("/api/seller", sellerRoutes);
+app.use("/api/upload", uploadRoutes);
 export default app;
 //# sourceMappingURL=app.js.map
